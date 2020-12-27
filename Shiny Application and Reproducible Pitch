@@ -1,0 +1,71 @@
+---
+title: "Developing Data Product - Shiny Application and Reproducible Pitch"
+author: "Jesily Thomas"
+date: "12/27/2020"
+output: ioslides_presentation
+---
+
+# Coursera Reproducible Pitch
+
+This is a task for the data science coursera course about developing data products for week 4. As part of this, I have created a shiny app and deployed it on the shiny server. The link is  https://jtcoder7.shinyapps.io/Project/. The code can be found at https://github.com/jesily07/Developing-Data-Product---Week-4-Project.
+
+
+```{r}
+data(mtcars)
+head(mtcars)
+```
+
+
+# UI Code
+
+```{r, echo=TRUE, warning=FALSE, message=FALSE, eval=FALSE}
+library(shiny)
+shinyUI(fluidPage(
+  
+  # Application title
+  titlePanel("Cars Dataset - Miles per Gallon"),
+  
+  sidebarPanel(
+    
+    selectInput("variable", "Variable:", 
+                c("Cylinders" = "cyl",
+                  "Transmission" = "am",
+                  "Gears" = "gear"))
+  ),
+  
+  mainPanel(
+    # Output: Formatted text for caption ----
+    h3(textOutput("caption")),
+    
+    # Output: Plot of the requested variable against mpg ----
+    plotOutput("mpgPlot")
+  )
+))
+```
+
+
+
+# Server code
+
+```{r, echo=TRUE, warning=FALSE, message=FALSE, eval=FALSE}
+library(shiny)
+library(plotly)
+mpgData <- mtcars
+mpgData$am <- factor(mpgData$am, labels = c("Automatic", "Manual"))
+shinyServer(function(input, output) {
+  
+  formulaText <- reactive({
+    paste("mpg vs ", input$variable)
+  })
+  
+  output$caption <- renderText({
+    formulaText()
+  })
+  output$mpgPlot <- renderPlot({
+    ggplot(mpgData, aes_string(y=input$variable, x="mpg")) + geom_point()
+  })
+  
+})
+
+```
+
