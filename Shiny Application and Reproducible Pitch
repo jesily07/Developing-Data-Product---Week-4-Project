@@ -1,0 +1,129 @@
+---
+title: "Developing Data Product - Shiny Application and Reproducible Pitch"
+author: "Jesily Thomas"
+date: "1/2/2021"
+output:
+  slidy_presentation: default
+  ioslides_presentation: default
+runtime: shiny
+---
+
+
+# Coursera Reproducible Pitch
+
+
+Shiny app created with MTcars dataset with two workable tabs for exploratory analysis with different variables and fuel consumption comparison variable throughput to observe summary statistics(str).
+
+
+
+The link to access the app @  https://jtcoder7.shinyapps.io/Project/. 
+
+The JHU project description and codes can be found at https://github.com/jesily07/Developing-Data-Product---Week-4-Project.
+
+
+
+# Overview
+
+The shiny app can conduct exploratory analysis with plots and summarize observations for MTcars dataset. 
+
+```{r}
+data(mtcars)
+head(mtcars)
+```
+
+
+# UI Code
+
+```{r, echo=TRUE, warning=FALSE, message=FALSE, eval=FALSE}
+library(shiny)
+dataset <- mtcars
+require(markdown)
+shinyUI(fluidPage(
+    
+    # Application title
+    titlePanel("MTcars dataset analysis"),
+    
+    HTML("<b> Tab 1 </b> Exploratory Analysis on dataset <br><b> 
+           Tab 2 </b> Fuel consumption - Transmission Type v/s Cylinders <br> <b>"),
+    h5("Reproducible Pitch Presentation slidy file link, click below:"),
+    h5(a("Click here",href=" https://jtcoder7.shinyapps.io/AAAA/")),
+    
+    tabsetPanel(
+        type="tabs",
+        tabPanel("Exploratory Analysis",
+                 br(),
+                 
+                 sidebarLayout(
+                     sidebarPanel(
+                         sliderInput("n","Number of Observations",10,nrow(dataset),value=10,step=5),
+                         selectInput("xvar","X-axis",names(dataset)),
+                         selectInput("yvar","Y-axis",names(dataset)),
+                         checkboxInput("smooth","smoothing curve",value=FALSE)
+                     ),
+                     mainPanel(
+                         h3(textOutput("Plot")),
+                         plotOutput("xyplot")
+                     )
+                 )
+        ),
+        
+        tabPanel("Fuel Consumption Comparison",
+                 br(),
+                 sidebarLayout(
+                     sidebarPanel(
+                         radioButtons("am","Transmission Type",c("Automatic" = "0","Manual" = "1")),
+                         radioButtons("cyl","Cylinders", c("4" = "4","6" = "6","8" = "8")),
+                         numericInput('horse','Power output - HP (70 - 250): ',100,min = 70,max = 250,step = 10)),
+                     
+                     mainPanel(
+                         tabsetPanel(
+                             tabPanel("Summary",
+                                      mainPanel(
+                                          h4("Summary Statistics"),
+                                          verbatimTextOutput("mpgId")
+                                      )
+                             )
+                         )
+                     )
+                 )
+                 
+        )
+    )
+))
+```
+
+
+# Server code
+
+```{r, echo=TRUE, warning=FALSE, message=FALSE, eval=FALSE}
+library(shiny)
+library(plotly)
+dataset <- mtcars
+shinyServer(function(input, output) {
+    
+    dataset <- reactive({
+        mtcars[sample(nrow(mtcars),input$n),]
+    })
+    
+    output$xyplot <- renderPlot({
+        g <- g<-ggplot(data=dataset(),aes_string(x=input$xvar,y=input$yvar, col=input$colorvar))+geom_point()+labs(x=input$xvar,y=input$yvar)
+        if(input$smooth){
+            g<-g+geom_smooth()
+        }
+        g
+    })
+    
+    fx <- function(x,y) {
+        data <- mtcars
+        tmp <- data[data$cyl == x, ]
+        tmp <- data[data$cyl == x & data$hp <= y, ]
+        
+        out <- summary(tmp$mpg)
+        return (out)
+    }
+    
+    output$mpgId <- renderPrint(fx(input$cyl, input$horse))
+    
+})
+
+``
